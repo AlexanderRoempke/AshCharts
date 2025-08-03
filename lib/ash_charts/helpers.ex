@@ -1,4 +1,4 @@
-defmodule AshCharts.Helpers do
+defmodule Tapir.Helpers do
   @moduledoc """
   Helper functions for working with charts and data.
   
@@ -33,7 +33,7 @@ defmodule AshCharts.Helpers do
       />
   """
   def fetch_chart_data(resource, opts \\ %{}) do
-    case AshCharts.DataHelper.process_data(Map.put(opts, :resource, resource)) do
+    case Tapir.DataHelper.process_data(Map.put(opts, :resource, resource)) do
       %{labels: [], datasets: []} -> get_empty_chart_data()
       chart_data -> chart_data
     end

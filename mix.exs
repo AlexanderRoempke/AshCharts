@@ -1,12 +1,12 @@
-defmodule AshCharts.MixProject do
+defmodule Tapir.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/yourusername/ash_charts"
+  @source_url "https://github.com/AlexanderRoempke/Tapir"
 
   def project do
     [
-      app: :ash_charts,
+      app: :tapir,
       version: @version,
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
@@ -14,7 +14,7 @@ defmodule AshCharts.MixProject do
       description: description(),
       package: package(),
       docs: docs(),
-      name: "AshCharts",
+      name: "Tapir",
       source_url: @source_url
     ]
   end
@@ -32,7 +32,8 @@ defmodule AshCharts.MixProject do
       {:phoenix_live_view, "~> 1.0"},
       {:phoenix, "~> 1.7"},
       {:jason, "~> 1.2"},
-      
+      {:igniter, "~> 0.6"},
+
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -46,20 +47,20 @@ defmodule AshCharts.MixProject do
 
   defp package do
     [
-      name: "ash_charts",
+      name: "tapir",
       files: ~w(lib priv mix.exs README* LICENSE* CHANGELOG*),
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
-      maintainers: ["Your Name"]
+      maintainers: ["Alexander Römpke"],
     ]
   end
 
   defp docs do
     [
-      main: "AshCharts",
+      main: "Tapir",
       source_ref: "v#{@version}",
       source_url: @source_url,
       extras: ["README.md", "CHANGELOG.md"]

@@ -1,4 +1,4 @@
-defmodule AshCharts.Components do
+defmodule Tapir.Components do
   @moduledoc """
   Phoenix LiveView components for rendering interactive charts from Ash resources.
   
@@ -171,7 +171,7 @@ defmodule AshCharts.Components do
   defp get_chart_data(assigns) do
     # In a real implementation, this would fetch data from the Ash resource
     # For now, we'll delegate to the data helper
-    AshCharts.DataHelper.process_data(%{
+    Tapir.DataHelper.process_data(%{
       resource: assigns.resource,
       x_field: assigns.x_field,
       y_field: assigns.y_field,

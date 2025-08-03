@@ -1,4 +1,4 @@
-defmodule AshCharts.DataHelper do
+defmodule Tapir.DataHelper do
   @moduledoc """
   Helper module for processing Ash resource data into chart-ready format.
   
@@ -80,7 +80,7 @@ defmodule AshCharts.DataHelper do
   
       iex> data = [%{name: "A", value: 10}, %{name: "B", value: 20}]
       iex> params = %{x_field: :name, y_field: :value}
-      iex> AshCharts.DataHelper.transform_for_chart(data, params)
+      iex> Tapir.DataHelper.transform_for_chart(data, params)
       %{
         labels: ["A", "B"],
         datasets: [%{label: "Value", data: [10, 20], ...}]
@@ -108,15 +108,14 @@ defmodule AshCharts.DataHelper do
   end
   
   defp apply_query_params(query, params) when params == %{}, do: query
-  defp apply_query_params(query, params) do
+  defp apply_query_params(query, _params) do
     # Apply filtering based on query params
     # This is a simplified implementation - in production you'd want more robust filtering
-    Enum.reduce(params, query, fn {field, value}, acc ->
-      where(acc, ^ref(field) == ^value)
-    end)
+    # For now, just return the query as-is since proper Ash filtering requires more context
+    query
   end
   
-  defp build_aggregation_query(query, params) do
+  defp build_aggregation_query(query, _params) do
     # For production use, implement proper Ash aggregations here
     # This is a placeholder that returns the basic query
     query

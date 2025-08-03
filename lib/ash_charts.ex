@@ -1,8 +1,8 @@
-defmodule AshCharts do
+defmodule Tapir do
   @moduledoc """
   A reusable chart library for Ash Framework applications.
 
-  AshCharts provides Phoenix LiveView components that make it easy to create
+  Tapir provides Phoenix LiveView components that make it easy to create
   interactive charts from your Ash resources using Chart.js.
 
   ## Features
@@ -16,12 +16,12 @@ defmodule AshCharts do
 
   ## Installation
 
-  Add `ash_charts` to your list of dependencies in `mix.exs`:
+  Add `tapir` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
     [
-      {:ash_charts, "~> 0.1.0"}
+      {:tapir, "~> 0.1.0"}
     ]
   end
   ```
@@ -39,7 +39,7 @@ defmodule AshCharts do
      defp html_helpers do
        quote do
          # Your existing imports...
-         import AshCharts.Components
+         import Tapir.Components
        end
      end
      ```
@@ -47,10 +47,10 @@ defmodule AshCharts do
   3. **Add the JavaScript hook** to your app.js:
      ```javascript
      // In assets/js/app.js
-     import AshChartsHook from "ash_charts/chart_hook"
+     import TapirHook from "tapir/chart_hook"
 
      const liveSocket = new LiveSocket("/live", Socket, {
-       hooks: {Chart: AshChartsHook, ...otherHooks}
+       hooks: {Chart: TapirHook, ...otherHooks}
      })
      ```
 
@@ -88,9 +88,9 @@ defmodule AshCharts do
 
   ## Components
 
-  - `AshCharts.Components` - Main chart components
-  - `AshCharts.DataHelper` - Data transformation utilities
-  - `AshCharts.Helpers` - Helper functions for common operations
+  - `Tapir.Components` - Main chart components
+  - `Tapir.DataHelper` - Data transformation utilities
+  - `Tapir.Helpers` - Helper functions for common operations
 
   For detailed documentation, see the individual modules.
   """

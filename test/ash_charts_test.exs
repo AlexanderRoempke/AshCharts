@@ -1,8 +1,8 @@
-defmodule AshChartsTest do
+defmodule TapirTest do
   use ExUnit.Case
-  doctest AshCharts
+  doctest Tapir
 
-  test "greets the world" do
-    assert AshCharts.hello() == :world
+  test "has version" do
+    assert is_binary(Tapir.version())
   end
 end

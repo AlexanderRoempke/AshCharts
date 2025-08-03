@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-08-03
 
 ### Added
-- Initial release of AshCharts
+- Initial release of Tapir
 - Core chart components for Ash Framework integration
 - Support for Bar, Line, Pie, Doughnut, and Radar charts
 - Phoenix LiveView integration with Chart.js
@@ -32,16 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Flexible**: Support for complex data transformations
 
 ### Components
-- `AshCharts.Components.ash_chart/1` - Main chart component
-- `AshCharts.Components.bar_chart/1` - Quick bar chart
-- `AshCharts.Components.line_chart/1` - Quick line chart
-- `AshCharts.Components.pie_chart/1` - Quick pie chart
+- `Tapir.Components.ash_chart/1` - Main chart component
+- `Tapir.Components.bar_chart/1` - Quick bar chart
+- `Tapir.Components.line_chart/1` - Quick line chart
+- `Tapir.Components.pie_chart/1` - Quick pie chart
 
 ### Modules
-- `AshCharts` - Main module with documentation
-- `AshCharts.Components` - Phoenix LiveView components
-- `AshCharts.DataHelper` - Data transformation utilities
-- `AshCharts.Helpers` - Helper functions and utilities
+- `Tapir` - Main module with documentation
+- `Tapir.Components` - Phoenix LiveView components
+- `Tapir.DataHelper` - Data transformation utilities
+- `Tapir.Helpers` - Helper functions and utilities
 
 ### Assets
 - `priv/static/js/chart_hook.js` - JavaScript integration hook

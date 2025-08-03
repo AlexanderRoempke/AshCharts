@@ -1,8 +1,8 @@
-# AshCharts
+# Tapir
 
-[![Hex.pm](https://img.shields.io/hexpm/v/ash_charts.svg)](https://hex.pm/packages/ash_charts)
-[![Documentation](https://img.shields.io/badge/documentation-hexdocs-blue.svg)](https://hexdocs.pm/ash_charts)
-[![License](https://img.shields.io/hexpm/l/ash_charts.svg)](LICENSE)
+[![Hex.pm](https://img.shields.io/hexpm/v/tapir.svg)](https://hex.pm/packages/tapir)
+[![Documentation](https://img.shields.io/badge/documentation-hexdocs-blue.svg)](https://hexdocs.pm/tapir)
+[![License](https://img.shields.io/hexpm/l/tapir.svg)](LICENSE)
 
 A reusable chart library for [Ash Framework](https://ash-hq.org/) applications with Phoenix LiveView integration. Create beautiful, interactive charts directly from your Ash resources using [Chart.js](https://www.chartjs.org/).
 
@@ -18,12 +18,12 @@ A reusable chart library for [Ash Framework](https://ash-hq.org/) applications w
 
 ## Installation
 
-Add `ash_charts` to your list of dependencies in `mix.exs`:
+Add `tapir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:ash_charts, "~> 0.1.0"}
+    {:tapir, "~> 0.1.0"}
   ]
 end
 ```
@@ -54,7 +54,7 @@ Add the chart components to your web module:
 defp html_helpers do
   quote do
     # Your existing imports...
-    import AshCharts.Components
+    import Tapir.Components
   end
 end
 ```
@@ -65,11 +65,11 @@ Import and register the chart hook in your `app.js`:
 
 ```javascript
 // In assets/js/app.js
-import AshChartsHook from "ash_charts/chart_hook"
+import TapirHook from "tapir/chart_hook"
 
 const liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
-  hooks: {Chart: AshChartsHook, ...otherHooks}
+  hooks: {Chart: TapirHook, ...otherHooks}
 })
 ```
 
