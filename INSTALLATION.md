@@ -4,35 +4,22 @@ Tapir provides automated installation using Igniter to set up everything you nee
 
 ## Automatic Installation (Recommended)
 
-1. **Add Tapir to your dependencies** in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:tapir, "~> 0.1"},
-    {:ash, "~> 3.0"},
-    # ... your other deps
-  ]
-end
-```
-
-2. **Get dependencies**:
+Simply run:
 
 ```bash
-mix deps.get
+mix igniter.install tapir
 ```
 
-3. **Run the automated installer**:
-
-```bash
-mix tapir.install
-```
-
-This will automatically:
+This single command will:
+- ✅ Add Tapir and Ash to your `mix.exs` dependencies
+- ✅ Run `mix deps.get` to fetch dependencies
 - ✅ Add Chart.js to your `assets/package.json`
 - ✅ Create `assets/js/chart_hook.js` with Chart.js integration
 - ✅ Update `assets/js/app.js` to import and configure the hook
 - ✅ Update `mix.exs` aliases to include `npm install --prefix assets`
+- ✅ Run `npm install` to install JavaScript dependencies
+
+
 
 ## What the Installer Does
 
@@ -69,7 +56,18 @@ Updates your `mix.exs` to add npm install to the `assets.setup` alias:
 ]
 ```
 
-## Manual Installation (Alternative)
+## Alternative Installation Methods
+
+### Using mix tapir.install
+
+If you already have Tapir in your dependencies, you can run:
+
+```bash
+mix deps.get
+mix tapir.install
+```
+
+### Manual Installation
 
 If you prefer manual setup or the automatic installer doesn't work perfectly:
 

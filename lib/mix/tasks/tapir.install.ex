@@ -21,6 +21,19 @@ defmodule Mix.Tasks.Tapir.Install do
 
   use Mix.Task
   
+  def supports_umbrella?, do: true
+  
+  def parse_argv(argv) do
+    {options, remaining_args, _invalid} = OptionParser.parse(argv, strict: [no_assets: :boolean, no_deps: :boolean, yes: :boolean])
+    
+    %Igniter.Mix.Task.Args{
+      positional: %{},
+      options: options,
+      argv_flags: remaining_args,
+      argv: argv
+    }
+  end
+  
   def run(argv) do
     if "--yes" in argv do
       System.put_env("IGNITER_ASSUME_YES", "true")
@@ -34,9 +47,10 @@ defmodule Mix.Tasks.Tapir.Install do
 
   def igniter(igniter, argv) do
     # Parse options from args
-    options = OptionParser.parse(argv, strict: [no_assets: :boolean, no_deps: :boolean, yes: :boolean]) |> elem(0)
+    %Igniter.Mix.Task.Args{options: options} = parse_argv(argv)
 
     igniter
+    |> setup_dependencies(options)
     |> setup_assets(options)
     |> setup_web_module(options)
     |> setup_mix_aliases(options)
@@ -75,16 +89,18 @@ defmodule Mix.Tasks.Tapir.Install do
     
     igniter
     |> Igniter.create_or_update_file(package_json_path, package_json_content, fn existing_content ->
-      case Jason.decode(existing_content) do
+      content_string = existing_content.content
+      case Jason.decode(content_string) do
         {:ok, json} ->
           updated_json = 
             json
             |> Map.put_new("dependencies", %{})
             |> put_in(["dependencies", "chart.js"], "^4.5.0")
           
-          Jason.encode!(updated_json, pretty: true)
+          new_content = Jason.encode!(updated_json, pretty: true)
+          Rewrite.Source.update(existing_content, :content, new_content)
         {:error, _} ->
-          package_json_content
+          Rewrite.Source.update(existing_content, :content, package_json_content)
       end
     end)
   end
@@ -310,12 +326,13 @@ export default TapirChartHook;
     
     igniter
     |> Igniter.update_file(app_js_path, fn content ->
+      content_string = content.content
       content_with_import = 
-        if String.contains?(content, "TapirChartHook") do
-          content
+        if String.contains?(content_string, "TapirChartHook") do
+          content_string
         else
           # Add import at the top with other imports
-          lines = String.split(content, "\\n")
+          lines = String.split(content_string, "\n")
           import_line = "import TapirChartHook from \"./chart_hook\""
           
           # Find position after last import
@@ -327,25 +344,37 @@ export default TapirChartHook;
             end)
           
           (before_imports ++ [import_line] ++ rest)
-          |> Enum.join("\\n")
+          |> Enum.join("\n")
         end
       
       # Update hooks configuration - handle different patterns
-      cond do
+      final_content = cond do
         String.contains?(content_with_import, "Chart:") ->
           content_with_import
         
         String.contains?(content_with_import, "hooks:") ->
-          # Add Chart hook to existing hooks
-          String.replace(content_with_import, ~r/hooks:\s*\{/, "hooks: {Chart: TapirChartHook, ")
+          # Add Chart hook to existing hooks - find the opening brace and add after it
+          if String.contains?(content_with_import, "hooks: {") do
+            String.replace(content_with_import, ~r/hooks:\s*\{([^}]*)/, fn match ->
+              if String.trim(String.slice(match, 7..-1)) == "{" do
+                "hooks: {Chart: TapirChartHook"
+              else
+                String.replace(match, "{", "{Chart: TapirChartHook, ")
+              end
+            end)
+          else
+            content_with_import
+          end
         
         true ->
           # Add hooks to LiveSocket config
           String.replace(content_with_import, 
             ~r/(new LiveSocket\([^,]+,\s*[^,]+,\s*)\{/,
-            "\\1{\\n  hooks: {Chart: TapirChartHook},"
+            "\\1{\n  hooks: {Chart: TapirChartHook},"
           )
       end
+      
+      Rewrite.Source.update(content, :content, final_content)
     end)
   end
 
@@ -362,11 +391,12 @@ export default TapirChartHook;
       # Update mix.exs to add npm install to assets.setup
       igniter
       |> Igniter.update_file("mix.exs", fn content ->
+        content_string = content.content
         # Add npm install to assets.setup if not already present
-        if String.contains?(content, "npm install --prefix assets") do
-          content
+        final_content = if String.contains?(content_string, "npm install --prefix assets") do
+          content_string
         else
-          content
+          content_string
           |> String.replace(
             ~r/"assets.setup": \[([^\]]*)\]/,
             fn match ->
@@ -378,6 +408,8 @@ export default TapirChartHook;
             end
           )
         end
+        
+        Rewrite.Source.update(content, :content, final_content)
       end)
     end
   end

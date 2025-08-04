@@ -28,37 +28,16 @@ defmodule Tapir do
 
   ## Setup
 
-  1. **Install Chart.js** in your Phoenix app:
+  1. **Install tapir with Chart.js** in your Phoenix app:
      ```bash
-     cd assets && npm install chart.js
-     ```
-
-  2. **Import the components** in your web module:
-     ```elixir
-     # In your_app_web.ex
-     defp html_helpers do
-       quote do
-         # Your existing imports...
-         import Tapir.Components
-       end
-     end
-     ```
-
-  3. **Add the JavaScript hook** to your app.js:
-     ```javascript
-     // In assets/js/app.js
-     import TapirHook from "tapir/chart_hook"
-
-     const liveSocket = new LiveSocket("/live", Socket, {
-       hooks: {Chart: TapirHook, ...otherHooks}
-     })
+     mix ignite.install tapir
      ```
 
   ## Quick Start
 
   ```elixir
   # Simple bar chart
-  <.ash_chart 
+  <.ash_chart
     resource={MyApp.User}
     chart_type={:bar}
     x_field={:role}
@@ -67,7 +46,7 @@ defmodule Tapir do
   />
 
   # Line chart with time grouping
-  <.ash_chart 
+  <.ash_chart
     resource={MyApp.Order}
     chart_type={:line}
     x_field={:created_at}
@@ -77,7 +56,7 @@ defmodule Tapir do
   />
 
   # Pie chart
-  <.ash_chart 
+  <.ash_chart
     resource={MyApp.Product}
     chart_type={:pie}
     x_field={:category}
