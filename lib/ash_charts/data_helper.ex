@@ -7,6 +7,7 @@ defmodule Tapir.DataHelper do
   """
   
   import Ash.Query
+  import Ash.Expr
   
   @doc """
   Processes data from an Ash resource for chart rendering.
@@ -108,12 +109,41 @@ defmodule Tapir.DataHelper do
   end
   
   defp apply_query_params(query, params) when params == %{}, do: query
-  defp apply_query_params(query, _params) do
-    # Apply filtering based on query params
-    # This is a simplified implementation - in production you'd want more robust filtering
-    # For now, just return the query as-is since proper Ash filtering requires more context
+  defp apply_query_params(query, params) do
     query
+    |> maybe_load_relationships(params[:load])
+    |> maybe_apply_filters(params[:filter])
+    |> maybe_apply_sort(params[:sort])
   end
+
+  defp maybe_load_relationships(query, nil), do: query
+  defp maybe_load_relationships(query, load) when is_list(load) do
+    Ash.Query.load(query, load)
+  end
+  defp maybe_load_relationships(query, load) when is_atom(load) do
+    Ash.Query.load(query, [load])
+  end
+  defp maybe_load_relationships(query, load) when is_map(load) do
+    Ash.Query.load(query, load)
+  end
+  defp maybe_load_relationships(query, _load), do: query
+
+  defp maybe_apply_filters(query, nil), do: query
+  defp maybe_apply_filters(query, filters) when is_map(filters) do
+    Enum.reduce(filters, query, fn {field, value}, acc_query ->
+      Ash.Query.filter(acc_query, ^ref(field) == ^value)
+    end)
+  end
+  defp maybe_apply_filters(query, _filters), do: query
+
+  defp maybe_apply_sort(query, nil), do: query
+  defp maybe_apply_sort(query, sort_field) when is_atom(sort_field) do
+    Ash.Query.sort(query, sort_field)
+  end
+  defp maybe_apply_sort(query, sort_fields) when is_list(sort_fields) do
+    Ash.Query.sort(query, sort_fields)
+  end
+  defp maybe_apply_sort(query, _sort), do: query
   
   defp build_aggregation_query(query, _params) do
     # For production use, implement proper Ash aggregations here
