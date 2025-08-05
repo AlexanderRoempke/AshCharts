@@ -81,11 +81,14 @@ defmodule Tapir.DataHelper do
   
       iex> data = [%{name: "A", value: 10}, %{name: "B", value: 20}]
       iex> params = %{x_field: :name, y_field: :value}
-      iex> Tapir.DataHelper.transform_for_chart(data, params)
-      %{
-        labels: ["A", "B"],
-        datasets: [%{label: "Value", data: [10, 20], ...}]
-      }
+      iex> result = Tapir.DataHelper.transform_for_chart(data, params)
+      iex> result.labels
+      ["A", "B"]
+      iex> [dataset] = result.datasets
+      iex> dataset.label
+      "Value"
+      iex> dataset.data
+      [10, 20]
   """
   def transform_for_chart(data, params) when is_list(data) do
     if params[:group_by] do
