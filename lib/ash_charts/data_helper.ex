@@ -18,10 +18,64 @@ defmodule Tapir.DataHelper do
   - `x_field` - Field to use for X-axis/labels
   - `y_field` - Field to use for Y-axis/values
   - `group_by` - Optional field to group data by
-  - `query_params` - Additional filters for the query
+  - `query_params` - Additional filters, sorting, and loading for the query
   - `aggregate_function` - How to aggregate data (:count, :sum, :avg, etc.)
   - `date_grouping` - How to group date fields (:day, :week, :month, :year)
   - `chart_type` - Type of chart being created
+  
+  ## Filtering Examples
+  
+  The `query_params.filter` supports comprehensive Ash filtering:
+  
+      # Simple equality
+      filter: %{status: "active", category: "important"}
+      
+      # Comparison operators  
+      filter: %{
+        count: %{greater_than: 0},
+        score: %{greater_than_or_equal: 50},
+        age: %{less_than: 65},
+        rating: %{less_than_or_equal: 5.0},
+        status: %{not_equal: "deleted"}
+      }
+      
+      # String operations
+      filter: %{
+        name: %{starts_with: "John"},
+        email: %{ends_with: "@company.com"},
+        description: %{contains: "important"},
+        title: %{like: "%Manager%"},
+        search: %{ilike: "%keyword%"}  # case-insensitive
+      }
+      
+      # Null checks
+      filter: %{
+        deleted_at: %{is_nil: true},
+        confirmed_at: %{is_nil: false}
+      }
+      
+      # List operations
+      filter: %{
+        status: ["active", "pending", "approved"],      # shorthand for "in"
+        category_id: %{in: [1, 2, 3]},
+        role: %{not_in: ["admin", "super_admin"]}
+      }
+      
+      # Complex mixed filters (all conditions are ANDed)
+      filter: %{
+        status: "active",
+        score: %{greater_than: 80},
+        category: ["tech", "science"],
+        title: %{contains: "AI"},
+        archived_at: %{is_nil: true}
+      }
+      
+      # List of filter maps (also ANDed together)
+      filter: [
+        %{status: "active"},
+        %{score: %{greater_than: 50}},
+        %{category: ["important", "urgent"]}
+      ]
   
   ## Returns
   
@@ -134,10 +188,119 @@ defmodule Tapir.DataHelper do
   defp maybe_apply_filters(query, nil), do: query
   defp maybe_apply_filters(query, filters) when is_map(filters) do
     Enum.reduce(filters, query, fn {field, value}, acc_query ->
-      Ash.Query.filter(acc_query, ^ref(field) == ^value)
+      apply_single_filter(acc_query, field, value)
+    end)
+  end
+  defp maybe_apply_filters(query, filters) when is_list(filters) do
+    # Support list of filter conditions that will be ANDed together
+    Enum.reduce(filters, query, fn filter_map, acc_query ->
+      maybe_apply_filters(acc_query, filter_map)
     end)
   end
   defp maybe_apply_filters(query, _filters), do: query
+
+  # Handle different filter value types
+  defp apply_single_filter(query, field, value) when is_map(value) do
+    # Handle comparison operators: %{greater_than: 5}, %{less_than: 10}, etc.
+    Enum.reduce(value, query, fn {operator, operand}, acc_query ->
+      apply_comparison_filter(acc_query, field, operator, operand)
+    end)
+  end
+  defp apply_single_filter(query, field, value) when is_list(value) do
+    # Handle "in" filters: field: [val1, val2, val3]
+    Ash.Query.filter(query, ^ref(field) in ^value)
+  end
+  defp apply_single_filter(query, field, value) do
+    # Handle simple equality: field: value
+    Ash.Query.filter(query, ^ref(field) == ^value)
+  end
+
+  # Handle comparison operators
+  defp apply_comparison_filter(query, field, :greater_than, value) do
+    Ash.Query.filter(query, ^ref(field) > ^value)
+  end
+  defp apply_comparison_filter(query, field, :greater_than_or_equal, value) do
+    Ash.Query.filter(query, ^ref(field) >= ^value)
+  end
+  defp apply_comparison_filter(query, field, :less_than, value) do
+    Ash.Query.filter(query, ^ref(field) < ^value)
+  end
+  defp apply_comparison_filter(query, field, :less_than_or_equal, value) do
+    Ash.Query.filter(query, ^ref(field) <= ^value)
+  end
+  defp apply_comparison_filter(query, field, :not_equal, value) do
+    Ash.Query.filter(query, ^ref(field) != ^value)
+  end
+  defp apply_comparison_filter(query, field, :is_nil, true) do
+    Ash.Query.filter(query, is_nil(^ref(field)))
+  end
+  defp apply_comparison_filter(query, field, :is_nil, false) do
+    Ash.Query.filter(query, not is_nil(^ref(field)))
+  end
+  defp apply_comparison_filter(query, field, :contains, value) do
+    Ash.Query.filter(query, contains(^ref(field), ^value))
+  end
+  # String operations - these may not be supported by all data layers (e.g., ETS)
+  # For ETS and other simple data layers, we fall back to contains
+  defp apply_comparison_filter(query, field, :starts_with, value) do
+    data_layer = query.resource.__ash_config__(:data_layer)
+    
+    if data_layer == Ash.DataLayer.Ets do
+      # ETS doesn't support like, use contains as approximation
+      Ash.Query.filter(query, contains(^ref(field), ^value))
+    else
+      # For SQL data layers that support like
+      Ash.Query.filter(query, like(^ref(field), ^"#{value}%"))
+    end
+  end
+  
+  defp apply_comparison_filter(query, field, :ends_with, value) do
+    data_layer = query.resource.__ash_config__(:data_layer)
+    
+    if data_layer == Ash.DataLayer.Ets do
+      # ETS doesn't support like, use contains as approximation
+      Ash.Query.filter(query, contains(^ref(field), ^value))
+    else
+      # For SQL data layers that support like
+      Ash.Query.filter(query, like(^ref(field), ^"%#{value}"))
+    end
+  end
+  
+  defp apply_comparison_filter(query, field, :like, value) do
+    data_layer = query.resource.__ash_config__(:data_layer)
+    
+    if data_layer == Ash.DataLayer.Ets do
+      # ETS doesn't support like, use contains by removing wildcards
+      clean_value = String.replace(value, "%", "")
+      Ash.Query.filter(query, contains(^ref(field), ^clean_value))
+    else
+      # For SQL data layers that support like
+      Ash.Query.filter(query, like(^ref(field), ^value))
+    end
+  end
+  
+  defp apply_comparison_filter(query, field, :ilike, value) do
+    data_layer = query.resource.__ash_config__(:data_layer)
+    
+    if data_layer == Ash.DataLayer.Ets do
+      # ETS doesn't support ilike, use contains (case sensitive though)
+      clean_value = String.replace(value, "%", "")
+      Ash.Query.filter(query, contains(^ref(field), ^clean_value))
+    else
+      # For SQL data layers that support ilike
+      Ash.Query.filter(query, ilike(^ref(field), ^value))
+    end
+  end
+  defp apply_comparison_filter(query, field, :in, values) when is_list(values) do
+    Ash.Query.filter(query, ^ref(field) in ^values)
+  end
+  defp apply_comparison_filter(query, field, :not_in, values) when is_list(values) do
+    Ash.Query.filter(query, ^ref(field) not in ^values)
+  end
+  # Fallback for unknown operators - treat as equality
+  defp apply_comparison_filter(query, field, _operator, value) do
+    Ash.Query.filter(query, ^ref(field) == ^value)
+  end
 
   defp maybe_apply_sort(query, nil), do: query
   defp maybe_apply_sort(query, sort_field) when is_atom(sort_field) do

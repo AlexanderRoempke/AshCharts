@@ -66,26 +66,151 @@ defmodule Tapir.DataHelperTest do
     end
   end
 
-  describe "maybe_apply_filters private function" do
-    test "filter syntax compiles without error" do
-      # This test will fail if there are syntax errors in the filtering code
-      # We can't directly test the private function, but we can test that
-      # the module compiles and the filter syntax is valid
-      
-      # Test that we can at least call process_data without crashing
-      # even with invalid resource (should return empty data)
+  describe "extended filtering functionality" do
+    test "basic equality filters compile without error" do
       params = %{
         resource: NonExistentResource,
         x_field: :name,
         y_field: :value,
         query_params: %{
-          filter: %{category: "A"}
+          filter: %{category: "A", status: "active"}
         }
       }
 
       result = Tapir.DataHelper.process_data(params)
-      
-      # Should return empty data due to invalid resource, but not crash due to filter syntax
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "comparison operators compile without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            count: %{greater_than: 0},
+            score: %{greater_than_or_equal: 50},
+            age: %{less_than: 65},
+            rating: %{less_than_or_equal: 5.0}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "string operations compile without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            name: %{starts_with: "John"},
+            email: %{ends_with: "@example.com"},
+            description: %{contains: "important"},
+            title: %{like: "%Manager%"},
+            search: %{ilike: "%keyword%"}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "null checks compile without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            deleted_at: %{is_nil: true},
+            confirmed_at: %{is_nil: false}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "list-based filters compile without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            status: ["active", "pending", "approved"],
+            category_id: %{in: [1, 2, 3]},
+            role: %{not_in: ["admin", "super_admin"]}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "complex mixed filters compile without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            # Simple equality
+            status: "active",
+            # Comparison
+            score: %{greater_than: 80},
+            # List inclusion  
+            category: ["tech", "science"],
+            # String operations
+            title: %{contains: "AI"},
+            # Null checks
+            archived_at: %{is_nil: true}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "list of filter maps compiles without error" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: [
+            %{status: "active"},
+            %{score: %{greater_than: 50}},
+            %{category: ["important", "urgent"]}
+          ]
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
+      assert %{labels: [], datasets: [%{data: []}]} = result
+    end
+
+    test "unknown operators fallback to equality" do
+      params = %{
+        resource: NonExistentResource,
+        x_field: :name,
+        y_field: :value,
+        query_params: %{
+          filter: %{
+            field: %{unknown_operator: "some_value"}
+          }
+        }
+      }
+
+      result = Tapir.DataHelper.process_data(params)
       assert %{labels: [], datasets: [%{data: []}]} = result
     end
   end
